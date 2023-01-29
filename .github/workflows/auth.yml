@@ -1,0 +1,32 @@
+name: deploy-auth
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  STORAGE_ACCOUNT: 'azwebappgithubworkflow'
+  AZURE_SUBSCRIPTION_ID: '351b6525-81b1-48bf-a6e8-4bd5da72e974'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm install -f
+      - run: npm run build
+
+      - uses: azure/login@v1
+        with:
+            creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Upload to the storage account
+        uses: azure/CLI@v1
+        with:
+          azcliversion: 2.30.0
+          inlineScript: |
+              az storage blob upload-batch --source ./dist --destination '$web/auth/latest' --account-name ${{ env.STORAGE_ACCOUNT }}
+      - name: logout
+        run: |
+              az logout
